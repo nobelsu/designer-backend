@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from vercel.sandbox import Sandbox
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 
@@ -28,7 +29,10 @@ def read_root():
 def createSandbox():
     sandbox = Sandbox.create(
         ports=[3000], 
-        source={"type": "git", "url":"https://github.com/nobelsu/expo-template"}
+        source={"type": "git", "url":"https://github.com/nobelsu/expo-template"},
+        team_id=os.getenv("VERCEL_TEAM_ID"),
+        project_id=os.getenv("VERCEL_PROJECT_ID"),
+        token=os.getenv("VERCEL_TOKEN"),
     )
 
     sandbox.run_command("npm", ["ci"])

@@ -1,4 +1,3 @@
-from typing import Union
 from dotenv import load_dotenv
 from vercel.sandbox import Sandbox
 from fastapi import FastAPI
@@ -18,11 +17,11 @@ app.add_middleware(
 load_dotenv('.env.local')
 
 @app.get("/")
-def read_root():
+def readRoot():
     return {"message": "Success!"}
 
 @app.get("/health")
-def read_root():
+def getHealth():
     return {"health": "Server is up and running!"}
 
 @app.get("/sandbox")
@@ -33,6 +32,7 @@ def createSandbox():
         team_id=os.getenv("VERCEL_TEAM_ID"),
         project_id=os.getenv("VERCEL_PROJECT_ID"),
         token=os.getenv("VERCEL_TOKEN"),
+        timeout=10 * 60 * 1000
     )
 
     sandbox.run_command("npm", ["ci"])

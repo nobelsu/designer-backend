@@ -35,8 +35,8 @@ def createSandbox():
         timeout=10 * 60 * 1000
     )
 
-    sandbox.run_command("npm", ["ci"])
-    sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
+    # sandbox.run_command("npm", ["ci"])
+    # sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
 
     return {
         "sandboxID": sandbox.sandbox_id,

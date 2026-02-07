@@ -6,7 +6,7 @@ import os
 from pydantic import BaseModel
 
 class RefreshProps(BaseModel):
-    sandboxId: str
+    snapshotId: str
 
 class DirectoryProps(BaseModel):
     sandboxId: str 
@@ -20,6 +20,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 load_dotenv('.env.local')
@@ -43,37 +44,32 @@ def createSandbox():
         timeout=10 * 60 * 1000
     )
 
-    # sandbox.run_command("npm", ["ci"])
-    # sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
+    sandbox.run_command("npm", ["ci"])
+    snapshot = sandbox.snapshot()
 
     return {
-        "sandboxID": sandbox.sandbox_id,
+        "sandboxId": sandbox.sandbox_id,
+        "snapshotId": snapshot.snapshot_id,
         "preview": sandbox.domain(3000),
     }
 
 @app.post("/refresh")
 def refreshSandbox(props: RefreshProps):
-    sandbox = Sandbox.get(
-        sandbox_id=props.sandboxId,
-        team_id=os.getenv("VERCEL_TEAM_ID"),
-        project_id=os.getenv("VERCEL_PROJECT_ID"),
-        token=os.getenv("VERCEL_TOKEN"),
-    )
-
-    snapshot = sandbox.snapshot()
-
-    newSandbox = Sandbox.create(
+    sandbox = Sandbox.create(
         ports=[3000], 
-        source={"type": "snapshot", "snapshot_id": snapshot.snapshot_id},
+        source={"type": "snapshot", "snapshot_id": props.snapshotId},
         team_id=os.getenv("VERCEL_TEAM_ID"),
         project_id=os.getenv("VERCEL_PROJECT_ID"),
         token=os.getenv("VERCEL_TOKEN"),
         timeout=10 * 60 * 1000
     )
 
+    snapshot = sandbox.snapshot()
+
     return {
-        "sandboxID": newSandbox.sandbox_id,
-        "preview": newSandbox.domain(3000),
+        "sandboxId": sandbox.sandbox_id,
+        "snapshotId": snapshot.snapshot_id,
+        "preview": sandbox.domain(3000),
     }
 
 @app.post("/directory")

@@ -5,15 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from pydantic import BaseModel
 
-class RefreshProps(BaseModel):
+class SnapshotProps(BaseModel):
     sandboxId: str
+
+class SnapshotSandboxProps(BaseModel):
+    snapshotId: str
 
 class DirectoryProps(BaseModel):
     sandboxId: str 
     path: str
 
 class StatusProps(BaseModel):
-    sandboxId: str
+    sandboxId: str 
 
 class ExtendProps(BaseModel):
     sandboxId: str
@@ -40,7 +43,7 @@ def readRoot():
 def getHealth():
     return {"health": "Server is up and running!"}
 
-@app.get("/sandbox")
+@app.get("/sandbox/new")
 def createSandbox():
     sandbox = Sandbox.create(
         ports=[3000], 
@@ -52,14 +55,15 @@ def createSandbox():
     )
 
     sandbox.run_command("npm", ["ci"])
+    sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
 
     return {
         "sandboxId": sandbox.sandbox_id,
         "preview": sandbox.domain(3000),
     }
 
-@app.post("/refresh")
-def refreshSandbox(props: RefreshProps):
+@app.post("/snapshot/")
+def createSnapshot(props: SnapshotProps):
     sandbox = Sandbox.get(
         sandbox_id=props.sandboxId,
         team_id=os.getenv("VERCEL_TEAM_ID"),
@@ -67,19 +71,27 @@ def refreshSandbox(props: RefreshProps):
         token=os.getenv("VERCEL_TOKEN"),
     )
     snapshot = sandbox.snapshot()
+    return {
+        "snapshotId": snapshot.snapshot_id,
+    }
 
-    newSandbox = Sandbox.create(
+@app.post("/sandbox/snapshot")
+def createSandboxSnapshot(props: SnapshotSandboxProps):
+    sandbox = Sandbox.create(
         ports=[3000], 
-        source={"type": "snapshot", "snapshot_id": snapshot.snapshot_id},
+        source={"type": "snapshot", "snapshot_id": props.snapshotId},
         team_id=os.getenv("VERCEL_TEAM_ID"),
         project_id=os.getenv("VERCEL_PROJECT_ID"),
         token=os.getenv("VERCEL_TOKEN"),
         timeout=15 * 60 * 1000
     )
 
+    sandbox.run_command("npm", ["ci"])
+    sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
+
     return {
-        "sandboxId": newSandbox.sandbox_id,
-        "preview": newSandbox.domain(3000),
+        "sandboxId": sandbox.sandbox_id,
+        "preview": sandbox.domain(3000),
     }
 
 @app.post("/extend")
@@ -103,6 +115,8 @@ def sandboxStatus(props: StatusProps):
     return {
         "status": sandbox.status
     }
+
+# HELPER
 
 @app.post("/directory")
 async def viewDirectory(props: DirectoryProps):

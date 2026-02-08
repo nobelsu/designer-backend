@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from vercel.sandbox import Sandbox
+from vercel.sandbox import Sandbox, Snapshot
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -9,6 +9,9 @@ class SnapshotProps(BaseModel):
     sandboxId: str
 
 class SnapshotSandboxProps(BaseModel):
+    snapshotId: str
+
+class DeleteProps(BaseModel):
     snapshotId: str
 
 class DirectoryProps(BaseModel):
@@ -53,8 +56,6 @@ def createSandbox():
         token=os.getenv("VERCEL_TOKEN"),
         timeout=15 * 60 * 1000
     )
-
-    sandbox.run_command("npm", ["ci"])
 
     return {
         "sandboxId": sandbox.sandbox_id,
@@ -102,6 +103,16 @@ def extendSandbox(props: ExtendProps):
         token=os.getenv("VERCEL_TOKEN"),
     )
     sandbox.extend_timeout(min(45*60*1000-sandbox.timeout, props.time*60*1000))
+
+@app.post("/snapshot/delete")
+def extendSandbox(props: DeleteProps):
+    snapshot = Snapshot.get(
+        snapshot_id=props.snapshotId,
+        team_id=os.getenv("VERCEL_TEAM_ID"),
+        project_id=os.getenv("VERCEL_PROJECT_ID"),
+        token=os.getenv("VERCEL_TOKEN"),
+    )
+    snapshot.delete()
 
 @app.post("/status")
 def sandboxStatus(props: StatusProps):

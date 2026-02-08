@@ -102,7 +102,7 @@ def extendSandbox(props: ExtendProps):
         project_id=os.getenv("VERCEL_PROJECT_ID"),
         token=os.getenv("VERCEL_TOKEN"),
     )
-    sandbox.extend_timeout(min(45*60*1000-sandbox.timeout, props.time*60*1000))
+    sandbox.extend_timeout(max(1000, min(45*60*1000-sandbox.timeout, props.time*60*1000)))
 
 @app.post("/snapshot/delete")
 def extendSandbox(props: DeleteProps):

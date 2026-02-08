@@ -55,7 +55,6 @@ def createSandbox():
     )
 
     sandbox.run_command("npm", ["ci"])
-    sandbox.run_command_detached("npx", ["expo", "start", "--web", "--port", "3000"])
 
     return {
         "sandboxId": sandbox.sandbox_id,

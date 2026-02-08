@@ -62,7 +62,7 @@ def createSandbox():
         "preview": sandbox.domain(3000),
     }
 
-@app.post("/snapshot/")
+@app.post("/snapshot")
 def createSnapshot(props: SnapshotProps):
     sandbox = Sandbox.get(
         sandbox_id=props.sandboxId,
